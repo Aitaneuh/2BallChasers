@@ -270,8 +270,8 @@ async def unmute(interaction: discord.Interaction):
 queues_by_rank = {}
 current_matches = {}
 
-@bot.tree.command(name="queue", description="Enter the queue")
-async def queue_join(interaction: discord.Interaction):
+@bot.tree.command(name="q", description="Enter the queue")
+async def q(interaction: discord.Interaction):
     user = interaction.user
     guild = interaction.guild
     channel = interaction.channel
@@ -371,15 +371,15 @@ async def queue_join(interaction: discord.Interaction):
         embed.set_footer(text="Powered By 2Ballchasers", icon_url="https://i.imgur.com/Qnltn2h.png")
         if queue_id:
             role = guild.get_role(queue_id)
-            await interaction.response.send_message(content=role.mention, embed=embed)
+            await interaction.response.send_message(content=role.mention, embed=embed, allowed_mentions=discord.AllowedMentions(roles=True))
         else:
             await interaction.response.send_message(embed=embed)
 
 #-------------------------------------------------------------------------------------------------------------------------
 
 
-@bot.tree.command(name="queue_leave", description="Leave the queue")
-async def queue_leave(interaction: discord.Interaction):
+@bot.tree.command(name="q_leave", description="Leave the queue")
+async def q_leave(interaction: discord.Interaction):
     user = interaction.user
     guild = interaction.guild
     channel = interaction.channel
@@ -482,9 +482,9 @@ matches = {}
 #-------------------------------------------------------------------------------------------------------------------------
 
 
-@bot.tree.command(name="match_report", description="Report the result of a match")
+@bot.tree.command(name="report", description="Report the result of a match")
 @app_commands.describe(match_id="id of the match", result="win or loss")
-async def match_report(interaction: discord.Interaction, match_id: int, result: str):
+async def report(interaction: discord.Interaction, match_id: int, result: str):
     user = interaction.user
     guild = interaction.guild
     channel = bot.get_channel(1231572432234745876)
@@ -575,35 +575,45 @@ async def match_report(interaction: discord.Interaction, match_id: int, result: 
 async def update_player_role(user_id, new_elo):
     try:
         guild = bot.get_guild(1231191798081261650)
+        if guild is None:
+            raise ValueError("Guild not found.")
+
         member = guild.get_member(user_id)
-
-        if member is not None:
-            new_role_id = await update_role(member, new_elo)
-            current_roles = [role for role in member.roles]
-
-            # Recherche de l'ancien rôle de rank
-            old_rank_role = None
-            for role in current_roles:
-                if role.id in [1231192753623531661, 1231288586746204171, 1231192851514396703, 1231288701217407016, 1231192964881977414, 1231288778367176744, 1231194853279531079, 1231288840304463872, 1231193036352913498, 1231288912165474384, 1231193165982208070, 1231288970516758559, 1231193325865009163, 1231289036937760930, 1231193393414275072, 1231289085583298680, 1231193462326427668, 1231289178617151579]:
-                    old_rank_role = role
-                    break
-
-            if old_rank_role is not None:
-                # Retirer l'ancien rôle
-                await member.remove_roles(old_rank_role)
-
-                # Ajouter le nouveau rôle correspondant au nouvel Elo
-                new_role = guild.get_role(new_role_id)
-                if new_role is not None:
-                    await member.add_roles(new_role)
-                else:
-                    raise ValueError("New role not found.")
-            else:
-                print("Old rank role not found for the user.")
-        else:
+        if member is None:
             raise ValueError("User not found.")
+
+        new_role_id = await update_role(member, new_elo)
+        if new_role_id is None:
+            raise ValueError("New role ID not found.")
+
+        current_roles = member.roles
+
+        # List of rank role IDs
+        rank_role_ids = [
+            1231192753623531661, 1231288586746204171, 1231192851514396703, 
+            1231288701217407016, 1231192964881977414, 1231288778367176744, 
+            1231194853279531079, 1231288840304463872, 1231193036352913498, 
+            1231288912165474384, 1231193165982208070, 1231288970516758559, 
+            1231193325865009163, 1231289036937760930, 1231193393414275072, 
+            1231289085583298680, 1231193462326427668, 1231289178617151579
+        ]
+
+        # Find the old rank role
+        old_rank_role = next((role for role in current_roles if role.id in rank_role_ids), None)
+
+        if old_rank_role:
+            # Remove the old rank role
+            await member.remove_roles(old_rank_role)
+
+        # Add the new rank role
+        new_role = guild.get_role(new_role_id)
+        if new_role:
+            await member.add_roles(new_role)
+        else:
+            raise ValueError("New role not found.")
+            
     except Exception as e:
-        # Gérer les erreurs
+        # Handle errors
         print(f"An error occurred: {e}")
 
 
@@ -714,35 +724,117 @@ async def admin_clear(interaction: discord.Interaction):
 
 #-------------------------------------------------------------------------------------------------------------------------
 
-@bot.tree.command(name="admin_set_elo", description="Set a elo for a user")
+@bot.tree.command(name="admin_set_elo", description="Set a ELO for a user")
 @commands.has_permissions(administrator=True)
 @app_commands.describe(user_id="ID of the player you want to change ELO.", new_elo="Value of the new ELO.")
 async def admin_set_elo(interaction: discord.Interaction, user_id: str, new_elo: str):
     if interaction.user.guild_permissions.administrator:
         try:
-            # Convertir les arguments en types appropriés si nécessaire
+            # Convert user_id and new_elo to integers
             user_id = int(user_id)
             new_elo = int(new_elo)
             
-            # Changer l'Elo de l'utilisateur dans la base de données
+            # Change the user's Elo in the database
             await change_elo(user_id, new_elo)
             
-            # Mettre à jour le rôle de l'utilisateur
+            # Update the user's role based on the new Elo
             await update_player_role(user_id, new_elo)
             
-            # Envoyer un message de confirmation
+            # Send a confirmation message
             embed = discord.Embed(color=0x000000, description=f"Player `{user_id}` ELO has been changed to {new_elo}.")
             embed.timestamp = discord.utils.utcnow()
             embed.set_footer(text="Powered By 2Ballchasers", icon_url="https://i.imgur.com/Qnltn2h.png")
             await interaction.response.send_message(embed=embed)
         except ValueError:
-            # Gérer les erreurs de conversion de type
+            # Handle type conversion errors
             await interaction.response.send_message("Invalid user ID or Elo. Please enter valid integers.")
         except Exception as e:
-            # Gérer les autres erreurs
+            # Handle other errors
             await interaction.response.send_message(f"An error occurred: {e}")
     else:
-        await interaction.response.send_message(f"{interaction.user.mention}, vous n'êtes pas administrateur.", ephemeral=True)
+        # Inform the user that they are not an administrator
+        await interaction.response.send_message(f"{interaction.user.mention}, you do not have administrator permissions.", ephemeral=True)
+
+#-------------------------------------------------------------------------------------------------------------------------
+
+@bot.tree.command(name="admin_report", description="Report the result of a match as an admin")
+@commands.has_permissions(administrator=True)
+@app_commands.describe(match_id="ID of the match", winner_id="ID of the winning player", loser_id="ID of the losing player", issue="Description of the issue (optional)")
+async def admin_report(interaction: discord.Interaction, match_id: int, winner_id: int, loser_id: int, issue: str = None):
+    user = interaction.user
+    guild = interaction.guild
+    channel = bot.get_channel(1231572432234745876)
+
+    # Verify if the match exists in the list of matches
+    match = matches.get(match_id)
+    if not match:
+        await interaction.response.send_message("Match not found. Please enter a valid match ID.", ephemeral=True)
+        return
+    
+    # Verify if the provided player IDs are part of the match
+    if winner_id not in [match.player1.id, match.player2.id] or loser_id not in [match.player1.id, match.player2.id]:
+        await interaction.response.send_message("Error: The specified players are not part of this match.", ephemeral=True)
+        return
+
+    # Fetch ELO ratings for both players
+    elo_winner = await get_elo(winner_id)
+    elo_loser = await get_elo(loser_id)
+
+    # Calculate the change in ELO for both players based on the result
+    delta_elo_winner, delta_elo_loser = await calculate_elo_change(elo_winner, elo_loser, 'win')
+
+    # Update ELO and roles if applicable
+    await update_elo(winner_id, elo_winner + delta_elo_winner)
+    await update_elo(loser_id, elo_loser + delta_elo_loser)
+    await update_player_role(winner_id, elo_winner + delta_elo_winner)
+    await update_player_role(loser_id, elo_loser + delta_elo_loser)
+
+    # Add win to the winner and loss to the loser
+    await add_win(winner_id)
+    await add_loss(loser_id)
+
+    # Remove the match from the matches list
+    if (match.match_rank != "Rank All"):
+        await update_elo(winner_id, delta_elo_winner)
+        await update_elo(loser_id, delta_elo_loser)
+        await update_player_role(winner_id, elo_winner + delta_elo_winner)
+        await update_player_role(loser_id, elo_loser + delta_elo_loser)
+        # Ajouter une victoire au joueur gagnant et une défaite au joueur perdant
+        await add_win(winner_id)
+        await add_loss(loser_id)
+
+    
+    del current_matches[match.player1.id]
+    del current_matches[match.player2.id]
+    matches.pop(match_id)
+
+    # Send confirmation message
+    embed = discord.Embed(color=0x000000, description=f"Match {match_id} successfully reported by admin.")
+    if issue:
+        embed.add_field(name="Reported Issue", value=issue, inline=False)
+    embed.set_footer(text="Powered By 2Ballchasers", icon_url="https://i.imgur.com/Qnltn2h.png")
+    embed.timestamp = discord.utils.utcnow()
+    await interaction.response.send_message(embed=embed)
+
+    # Notify both players and the reporting channel
+    player1 = guild.get_member(match.player1.id)
+    player2 = guild.get_member(match.player2.id)
+    if player1 and player2:
+        embed = discord.Embed(
+            title="Match Result Reported by Admin",
+            description=f"Match ID: {match_id}\nReported by Admin: {user.name}\nWinner: <@{winner_id}>\nLoser: <@{loser_id}>",
+            color=0x000000
+        )
+        if issue:
+            embed.add_field(name="Reported Issue", value=issue, inline=False)
+        embed.set_footer(text="Powered By 2Ballchasers", icon_url="https://i.imgur.com/Qnltn2h.png")
+        embed.timestamp = discord.utils.utcnow()
+        await channel.send(embed=embed)
+        await player1.send(embed=embed)
+        await player2.send(embed=embed)
+    else:
+        await interaction.response.send_message("Error: One or both players are not found in the server.", ephemeral=True)
+
 #-------------------------------------------------------------------------------------------------------------------------
 
 # initialition du token
