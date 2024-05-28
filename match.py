@@ -63,7 +63,7 @@ async def create_match(guild, channel, player1, player2, match_rank):
     embed.timestamp = discord.utils.utcnow()
     embed.add_field(name="Match Best Of :", value="Best Of 5", inline=False)
     embed.add_field(name="Match Mutators :", value="None", inline=False)
-    embed.add_field(name="Match Map :", value="Any standart map you want", inline=False)
+    embed.add_field(name="Match Map :", value="Any standard map you want", inline=False)
     embed.add_field(name="Match ID :", value=f"{match_id}", inline=False)
     embed.add_field(name="Players :",value=f"{player1.name} | {player1_elo} ELO vs {player2.name} | {player2_elo} ELO", inline=False)
     embed.add_field(name="Host :", value=f"{host.name}", inline=False)
