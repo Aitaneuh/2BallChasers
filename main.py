@@ -136,20 +136,20 @@ async def leaderboard_elo():
 
 
 @bot.tree.command(name="register", description="Register yourself to 2Ballchasers")
-@app_commands.describe(epic_username="What's your epic username ?", tracker_link="The link to your Tracker")
+@app_commands.describe(epic_username="What's your Epic username ?", tracker_link="The link to your Tracker")
 async def register(interaction: discord.Interaction, epic_username: str, tracker_link: str):
     guild = interaction.guild
     view = ButtonView(epic_username, tracker_link, guild, interaction.user.id)
 
     embed = discord.Embed(
     title=f"Thank you {interaction.user.name} for your registration to 2Ballchasers",
-    description="Let's see if your informations are correct",
+    description="Let's see if your information is correct",
     color=0x000000
     )
-    embed.add_field(name="Discord Username (cant be wrong) :", value=f"{interaction.user.name}", inline=False)
+    embed.add_field(name="Discord Username (can't be wrong) :", value=f"{interaction.user.name}", inline=False)
     embed.add_field(name="Epic Username :", value=f"{epic_username}", inline=False)
     embed.add_field(name="Link to your tracker :", value=f"{tracker_link}", inline=False)
-    embed.add_field(name="Do you confirm that these informations are correct ?", value="use buttons below to Confirm or Cancel", inline=False)
+    embed.add_field(name="Do you confirm that this information is correct ?", value="use buttons below to Confirm or Cancel", inline=False)
     embed.set_author(name=f"registration of {interaction.user.name}")
     embed.set_footer(text="Powered By 2Ballchasers", icon_url="https://i.imgur.com/Qnltn2h.png")
     embed.timestamp = discord.utils.utcnow()
@@ -335,7 +335,7 @@ async def q(interaction: discord.Interaction):
         # Envoyer un message de confirmation dans le salon
         embed = discord.Embed(
             title=f"{user.name} has joined the game queue for {queue_name}.",
-            description=f"A match will soon be created",
+            description=f"A match will be created soon",
             color=color
         )
         # Ajout d'un timestamp
@@ -451,7 +451,7 @@ class ButtonView(discord.ui.View):
 
     async def btnCancel(self, interaction: discord.Interaction):
         if interaction.user.id == self.author_id:
-            await interaction.response.send_message("You Cancelled your registration.", ephemeral=True, delete_after=5)
+            await interaction.response.send_message("You cancelled your registration.", ephemeral=True, delete_after=5)
             await interaction.message.delete()
         else:
             await interaction.response.send_message("You are not authorized to cancel this registration.", ephemeral=True)
@@ -643,13 +643,13 @@ async def stats_command(interaction: discord.Interaction):
         embed.add_field(name="Wins", value=wins, inline=True)
         embed.add_field(name="Losses", value=losses, inline=True)
         if (losses == 0 and wins > 0):
-            embed.add_field(name="Winrate", value=round(wins / (losses + 1), 5), inline=False)
+            embed.add_field(name="Win rate", value=round(wins / (losses + 1), 5), inline=False)
             embed.add_field(name="Win per Game", value=round(wins / (wins + losses), 5), inline=False)
         elif (losses == 0 and wins == 0):
-            embed.add_field(name="Winrate", value="No game played", inline=False)
+            embed.add_field(name="Win rate", value="No game played", inline=False)
             embed.add_field(name="Win per Game", value="No game played", inline=False)
         else:
-            embed.add_field(name="Winrate", value=round(wins / losses, 5), inline=False)
+            embed.add_field(name="Win rate", value=round(wins / losses, 5), inline=False)
             embed.add_field(name="Win per Game", value=round(wins / (wins + losses), 5), inline=False)
         
         embed.add_field(name="Tracker Link", value=tracker_link, inline=False)
@@ -690,13 +690,13 @@ async def stats_command(interaction: discord.Interaction, user_id: str):
             embed.add_field(name="Wins", value=wins, inline=True)
             embed.add_field(name="Losses", value=losses, inline=True)
             if (losses == 0 and wins > 0):
-                embed.add_field(name="Winrate", value=round(wins / (losses + 1), 5), inline=False)
+                embed.add_field(name="Win rate", value=round(wins / (losses + 1), 5), inline=False)
                 embed.add_field(name="Win per Game", value=round(wins / (wins + losses), 5), inline=False)
             elif (losses == 0 and wins == 0):
-                embed.add_field(name="Winrate", value="No game played", inline=False)
+                embed.add_field(name="Win rate", value="No game played", inline=False)
                 embed.add_field(name="Win per Game", value="No game played", inline=False)
             else:
-                embed.add_field(name="Winrate", value=round(wins / losses, 5), inline=False)
+                embed.add_field(name="Win rate", value=round(wins / losses, 5), inline=False)
                 embed.add_field(name="Win per Game", value=round(wins / (wins + losses), 5), inline=False)
             
             embed.add_field(name="Tracker Link", value=tracker_link, inline=False)
